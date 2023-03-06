@@ -1,15 +1,22 @@
 var fs = require('fs');
+const path = require('path');
 
-var file = 'C:\\Utilisateurs\\Administrateur\\Documents\\Export fichier client\\users.json';
-var fileSortie = 'C:\\Utilisateurs\\Administrateur\\Documents\\Export fichier client\\sortie.csv';
+const inputFile = path.join(__dirname, '..', 'data', 'users.json');
+const outputFile = path.join(__dirname, '..', 'output', 'users.csv');
 
-fs.readFile(file, 'utf8', function(e, fileData) {
-    var fileJSON = JSON.parse(fileData);
-    var tailleJSON = fileJSON.length + 1;
-    for(var i = tailleJSON; --i; !!i) {
-        var ligne = fileJSON[i - 1];
-        if(ligne.isActive === false) continue;
-        fs.appendFile(fileSortie, "\""+ ligne.name + "\""+";" + "\""+ ligne.company+"\"");
-        fs.appendFile(fileSortie, "\n");
+
+async function jsonActiveCustomersToCsv(inputFile, outputFile) {
+    try {
+        const options = { encoding: 'utf8' };
+        const fileData = await fs.promises.readFile(inputFile, options);
+        const customers = JSON.parse(fileData);
+        const activeCustomers = customers.filter((customer) => customer.isActive);
+        const csvData = `"name","company"\n${activeCustomers.map((customer) => `"${customer.name}","${customer.company}"\n`).join('')}`;
+        await fs.promises.writeFile(outputFile, '\ufeff' + csvData, options);
+        console.log('Done');
+    } catch (err) {
+        console.error(err);
     }
-});
+}
+
+jsonActiveCustomersToCsv(inputFile, outputFile);
